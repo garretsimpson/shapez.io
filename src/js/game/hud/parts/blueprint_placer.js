@@ -228,6 +228,7 @@ export class HUDBlueprintPlacer extends BaseHUDPart {
      * Copy blueprint to clipboard
      */
     async copyToClipboard() {
+        // this.currentBlueprint.get().serializeAsGrid();
         const serializedBP = this.currentBlueprint.get().serialize();
         try {
             const json = JSON.stringify(serializedBP);

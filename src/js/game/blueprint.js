@@ -44,6 +44,82 @@ export class Blueprint {
     }
 
     /**
+     * Serialize as a grid of text
+     */
+    serializeAsGrid() {
+        const data = new SerializerInternal().serializeEntityArray(this.entities);
+        const origins = data.map(e => e.components.StaticMapEntity.origin);
+        const minX = Math.min(...origins.map(v => v.x));
+        const maxX = Math.max(...origins.map(v => v.x));
+        const minY = Math.min(...origins.map(v => v.y));
+        const maxY = Math.max(...origins.map(v => v.y));
+        logger.debug("Range:", minX, maxX, minY, maxY);
+
+        // TODO: This data belongs in the module that defines the component codes.
+        const map = {
+            27: ["│ ", "──", "│ ", "──"], // line
+            28: ["┌─", "┐ ", "┘ ", "└─"], // corner
+            29: ["┬─", "┤ ", "┴─", "├─"], // tee
+            30: ["┼─", "┼─", "┼─", "┼─"], // cross
+            31: ["@^", "@>", "@v", "@<"],
+            32: ["A^", "A>", "Av", "A<"],
+            34: ["N^", "N>", "Nv", "N<"],
+            35: ["X^", "X>", "Xv", "X<"],
+            36: ["O^", "O>", "Ov", "O<"],
+            38: ["d^", "d>", "dv", "d<"],
+            39: ["##", "##", "##", "##"],
+            42: ["C^", "C>", "Cv", "C<"],
+            43: ["Z^", "Z>", "Zv", "Z<"],
+            44: ["R^", "R>", "Rv", "R<"],
+            45: ["U^", "U>", "Uv", "U<"],
+            46: ["E^", "E>", "Ev", "E<"],
+            50: ["S^", "S>", "Sv", "S<"],
+            51: ["P^", "P>", "Pv", "P<"],
+            52: ["║ ", "══", "║ ", "══"],
+            53: ["╔═", "╗ ", "╝ ", "╚═"],
+            54: ["╦═", "╣ ", "╩═", "╠═"],
+            55: ["╬═", "╬═", "╬═", "╬═"],
+            60: ["b^", "b>", "bv", "b<"],
+        };
+
+        // Initiailize the grid
+        let grid = [];
+        for (let y = minY; y <= maxY; y++) {
+            grid[y - minY] = [];
+            for (let x = minX; x <= maxX; x++) {
+                grid[y - minY][x - minX] = "  ";
+            }
+        }
+
+        // Add the elements
+        for (let i = 0; i < data.length; ++i) {
+            const e = data[i].components.StaticMapEntity;
+            const x = e.origin.x - minX;
+            const y = e.origin.y - minY;
+            const code = e.code;
+            const rot = e.rotation;
+            const val = map[code][rot / 90] || "??";
+            // logger.debug("Values:", x, y, code, rot, val);
+            grid[y][x] = val;
+        }
+        logger.debug("\n" + grid.map(a => a.join("")).join("\n"));
+
+        // Get the constants
+        let cvals = [];
+        for (let i = 0; i < data.length; ++i) {
+            const c = data[i].components.ConstantSignal;
+            if (!c) continue;
+            const e = data[i].components.StaticMapEntity;
+            const x = e.origin.x - minX;
+            const y = e.origin.y - minY;
+            const val = "@[" + x + "," + y + "]=" + c.signal.data;
+            cvals.push(val);
+        }
+        logger.debug("\n" + cvals.join("\n"));
+        return grid;
+    }
+
+    /**
      * Deserialize
      * @param {GameRoot} root
      * @param {Object} json

@@ -116,5 +116,8 @@ export default {
     // Disables slow asserts, useful for debugging performance
     // disableSlowAsserts: true,
     // -----------------------------------------------------------------------------------
+    // Enable the synth
+    // enableSynth: true,
+    // -----------------------------------------------------------------------------------
     /* dev:end */
 };

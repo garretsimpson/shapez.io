@@ -27,6 +27,8 @@ import { ItemProducerSystem } from "./systems/item_producer";
 import { ConstantProducerSystem } from "./systems/constant_producer";
 import { GoalAcceptorSystem } from "./systems/goal_acceptor";
 import { ZoneSystem } from "./systems/zone";
+import { SynthSystem } from "./systems/synth";
+import { globalConfig } from "../core/config";
 
 const logger = createLogger("game_system_manager");
 
@@ -112,6 +114,9 @@ export class GameSystemManager {
             /** @type {ZoneSystem} */
             zone: null,
 
+            /** @type {SynthSystem} */
+            synth: null,
+
             /* typehints:end */
         };
         this.systemUpdateOrder = [];
@@ -176,6 +181,10 @@ export class GameSystemManager {
         add("beltReader", BeltReaderSystem);
 
         add("display", DisplaySystem);
+
+        if (G_IS_DEV && globalConfig.debug.enableSynth) {
+            add("synth", SynthSystem);
+        }
 
         add("itemProcessorOverlays", ItemProcessorOverlaysSystem);
 

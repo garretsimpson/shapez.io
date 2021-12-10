@@ -451,6 +451,11 @@ export class GameCore {
             // Miner & Static map entities etc.
             root.map.drawForeground(params);
 
+            // Synth - must come after drawing Displays
+            if (G_IS_DEV && globalConfig.debug.enableSynth) {
+                systems.synth.play();
+            }
+
             // HUB Overlay
             systems.hub.draw(params);
 

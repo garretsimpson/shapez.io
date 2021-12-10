@@ -1,4 +1,5 @@
 import { globalConfig } from "../../core/config";
+import { createLogger } from "../../core/logging";
 import { Loader } from "../../core/loader";
 import { BaseItem } from "../base_item";
 import { enumColors } from "../colors";
@@ -7,6 +8,9 @@ import { GameSystemWithFilter } from "../game_system_with_filter";
 import { isTrueItem } from "../items/boolean_item";
 import { ColorItem, COLOR_ITEM_SINGLETONS } from "../items/color_item";
 import { MapChunkView } from "../map_chunk_view";
+import { Entity } from "../entity";
+
+const logger = createLogger("display");
 
 export class DisplaySystem extends GameSystemWithFilter {
     constructor(root) {
@@ -21,6 +25,22 @@ export class DisplaySystem extends GameSystemWithFilter {
             }
             this.displaySprites[colorId] = Loader.getSprite("sprites/wires/display/" + colorId + ".png");
         }
+
+        /** @type {Array<Entity>} */
+        this.drawnEntities = [];
+
+        this.root.signals.gameFrameStarted.add(this.clearDrawnEntities, this);
+    }
+
+    clearDrawnEntities() {
+        this.drawnEntities.length = 0;
+    }
+
+    /**
+     * @returns {Array<Entity>}
+     */
+    getDrawnEntities() {
+        return this.drawnEntities.sort((a, b) => a.uid - b.uid);
     }
 
     /**
@@ -62,15 +82,15 @@ export class DisplaySystem extends GameSystemWithFilter {
         for (let i = 0; i < contents.length; ++i) {
             const entity = contents[i];
             if (entity && entity.components.Display) {
+                this.drawnEntities.push(entity);
+
                 const pinsComp = entity.components.WiredPins;
                 const network = pinsComp.slots[0].linkedNetwork;
-
                 if (!network || !network.hasValue()) {
                     continue;
                 }
 
                 const value = this.getDisplayItem(network.currentValue);
-
                 if (!value) {
                     continue;
                 }

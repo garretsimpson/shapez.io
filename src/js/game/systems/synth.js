@@ -9,6 +9,16 @@ export class SynthSystem extends GameSystem {
         super(root);
 
         this.synths = {};
+
+        this.root.signals.aboutToDestruct.add(this.cleanup, this);
+    }
+
+    cleanup() {
+        const synths = this.synths;
+        for (let uid of Object.keys(synths)) {
+            synths[uid].dispose();
+            delete synths[uid];
+        }
     }
 
     /**
@@ -68,6 +78,7 @@ class ShapezSynth {
     constructor(uid) {
         this.uid = uid;
         this.synth = new Tone.Synth().toDestination();
+        this.synth.oscillator.type = "sine";
         this.shape = "";
     }
 
@@ -88,19 +99,19 @@ class ShapezSynth {
         const octiveIndex = OCTIVE_STR.indexOf(shape[0]);
         const toneIndex = TONE_STR.indexOf(shape[1]);
         const adjIndex = ADJ_STR.indexOf(shape[2]);
-        const note = TONES[toneIndex] + ADJS[adjIndex] + (octiveIndex + 3);
+        const note = TONES[toneIndex] + ADJS[adjIndex] + (octiveIndex + 2);
 
         return note;
     }
 
-    update(value) {
-        if (this.shape == value) return;
+    update(shape) {
+        if (this.shape == shape) return;
 
-        this.shape = value;
+        this.shape = shape;
         this.synth.triggerRelease();
         const note = this.getNoteFromShape(this.shape);
         logger.debug(note);
-        if (note == "") return; // release
+        if (!note) return; // release
         this.synth.triggerAttack(note);
     }
 

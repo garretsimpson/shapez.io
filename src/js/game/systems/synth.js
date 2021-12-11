@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import { THIRDPARTY_URLS } from "../../core/config";
 import { createLogger } from "../../core/logging";
 import { GameSystem } from "../game_system";
 
@@ -77,8 +78,25 @@ export class SynthSystem extends GameSystem {
 class ShapezSynth {
     constructor(uid) {
         this.uid = uid;
-        this.synth = new Tone.Synth().toDestination();
-        this.synth.oscillator.type = "sine";
+        const synth = new Tone.FMSynth();
+        synth.oscillator.type = "sine";
+        synth.modulation.type = "sine";
+        synth.harmonicity.value = 5;
+        synth.envelope.set({
+            attack: 0.005,
+            decay: 0.1,
+            release: 2,
+            sustain: 0.5,
+            releaseCurve: "exponential",
+        });
+        synth.modulationEnvelope.set({
+            attack: 0.005,
+            decay: 0.1,
+            release: 1,
+            sustain: 0.3,
+            //releaseCurve: "exponential",
+        });
+        this.synth = synth.toDestination();
         this.shape = "";
     }
 
@@ -89,17 +107,21 @@ class ShapezSynth {
      */
     getNoteFromShape(shape) {
         const OCTIVE_STR = "CRSW";
-        const TONE_STR = "rygcbpw";
+        const TONE_STR = "urygcbpw";
         const ADJ_STR = "CRS";
-        const TONES = "CDEFGAB";
+        const TONES = "-CDEFGAB";
         const ADJS = ["b", "", "#"];
 
         if (!shape) return;
         if (shape.length < 4) return;
-        const octiveIndex = OCTIVE_STR.indexOf(shape[0]);
+
+        let note = "";
         const toneIndex = TONE_STR.indexOf(shape[1]);
+        if (toneIndex == 0) return note; // rest
+
         const adjIndex = ADJ_STR.indexOf(shape[2]);
-        const note = TONES[toneIndex] + ADJS[adjIndex] + (octiveIndex + 2);
+        const octiveIndex = OCTIVE_STR.indexOf(shape[0]);
+        note = TONES[toneIndex] + ADJS[adjIndex] + (octiveIndex + 3);
 
         return note;
     }
@@ -108,11 +130,11 @@ class ShapezSynth {
         if (this.shape == shape) return;
 
         this.shape = shape;
-        this.synth.triggerRelease();
+        //this.synth.triggerRelease();
         const note = this.getNoteFromShape(this.shape);
         logger.debug(note);
         if (!note) return; // release
-        this.synth.triggerAttack(note);
+        this.synth.triggerAttackRelease(note, "16n");
     }
 
     dispose() {
